@@ -169,7 +169,7 @@ button {
 <!-- SINGLE -->
 
 <div id="mapSingle" class="mapBox">
-  <img src="L11_V3A.png">
+  <img src="L11_v3a.png">
   <div id="svgContainer" class="svgLayer"></div>
 </div>
 
@@ -177,11 +177,11 @@ button {
 
 <div id="compareWrap">
   <div class="mapBox">
-    <img src="L11_V3A.png">
+    <img src="L11_v3a.png">
     <div id="svgContainer1" class="svgLayer"></div>
   </div>
   <div class="mapBox">
-    <img src="L11_V3A.png">
+    <img src="L11_v3a.png">
     <div id="svgContainer2" class="svgLayer"></div>
   </div>
 </div>
@@ -215,7 +215,7 @@ keys.forEach((k,i)=>{
 
 // LOAD SVG
 function loadSVG(id, cb){
-  fetch("L11_v3A.svg")
+  fetch("L11_v3a.svg")
   .then(r=>r.text())
   .then(svg=>{
     document.getElementById(id).innerHTML=svg;
@@ -735,7 +735,7 @@ function exportImage(){
   const ctx = canvas.getContext("2d");
 
   const img = new Image();
-  img.src = "L11_V3A.png";
+  img.src = "L11_v3a.png";
 
   img.onload = () => {
 
