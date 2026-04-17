@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Desk Planner - Help</title>
+
+<style>
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  margin: 0;
+  background: #f5f7fa;
+  color: #333;
+}
+
+.header {
+  background: linear-gradient(90deg,#0b3c66,#145a9c);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+}
+
+h1 { margin: 0; font-size: 22px; }
+h2 { margin-top: 25px; color:#0b3c66; }
+p { line-height: 1.6; }
+
+ul {
+  margin-top: 8px;
+  padding-left: 18px;
+}
+
+.tip {
+  background:#eef6ff;
+  border-left:4px solid #0b3c66;
+  padding:10px;
+  margin:15px 0;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+  <h1>Desk Planner – User Guide</h1>
+</div>
+
+<div class="container">
+
+<h2>Overview</h2>
+<p>
+The Desk Planner allows you to assign desks to teams across the working week using an interactive floor plan.
+You can import team lists, allocate desks visually, and export your plan for reuse.
+</p>
+
+---
+
+<h2>Basic Workflow</h2>
+<ul>
+  <li>Select a <strong>day</strong> from the dropdown</li>
+  <li>Click one or more desks on the floor plan</li>
+  <li>Click a <strong>team</strong> in the legend to assign</li>
+  <li>Repeat for other days as needed</li>
+</ul>
+
+<div class="tip">
+Tip: Hold <strong>Ctrl</strong> or enable <strong>Multi</strong> to select multiple desks at once.
+</div>
+
+---
+
+<h2>Teams</h2>
+
+<h3>Import Teams</h3>
+<p>
+Use the <strong>Import Teams</strong> button to load a CSV file with team IDs and names.
+</p>
+
+<p>Example format:</p>
+<pre>
+team_id,team_name
+T1,Finance
+T2,HR
+T3,IT
+</pre>
+
+<h3>Add Team</h3>
+<p>
+Use <strong>Add Team</strong> to create a new team on the fly.
+The system will automatically assign the next available team ID (e.g. T1, T4, etc).
+</p>
+
+---
+
+<h2>Assigning Desks</h2>
+<ul>
+  <li>Select desks by clicking on the map</li>
+  <li>Click a team in the legend to assign</li>
+  <li>Click empty space to clear selection</li>
+</ul>
+
+---
+
+<h2>Copy Between Days</h2>
+<p>
+Use the <strong>Copy</strong> button to copy desk assignments from the current day to one or more other days.
+</p>
+
+---
+
+<h2>Import / Export</h2>
+
+<h3>Export</h3>
+<p>
+Export saves:
+</p>
+<ul>
+  <li>Desk assignments for each day</li>
+  <li>Team IDs (T1, T2, etc)</li>
+  <li>Team names</li>
+</ul>
+
+<h3>Import</h3>
+<p>
+Import restores:
+</p>
+<ul>
+  <li>Desk assignments</li>
+  <li>Team names (automatically rebuilds the legend)</li>
+</ul>
+
+<div class="tip">
+You do not need to re-import the team list if using an exported file.
+</div>
+
+---
+
+<h2>Legend</h2>
+<p>
+The legend shows all available teams and their colours.
+Clicking a team assigns it to the selected desks.
+</p>
+
+---
+
+<h2>Summary</h2>
+<p>
+The summary shows:
+</p>
+<ul>
+  <li>Total desks</li>
+  <li>Assigned vs free desks</li>
+  <li>Desk count per team</li>
+</ul>
+
+---
+
+<h2>Compare Mode</h2>
+<p>
+Switch to <strong>Compare</strong> mode to view two days side by side.
+Editing is disabled in this mode.
+</p>
+
+---
+
+<h2>Other Features</h2>
+<ul>
+  <li><strong>Undo</strong> – revert last change</li>
+  <li><strong>Reset</strong> – clear all data</li>
+  <li><strong>Multi</strong> – toggle multi-select mode</li>
+</ul>
+
+---
+
+<h2>Tips</h2>
+<ul>
+  <li>Use CSV export regularly to save your work</li>
+  <li>Keep team IDs consistent across floors</li>
+  <li>Use Compare mode to review occupancy changes</li>
+</ul>
+
+</div>
+
+</body>
+</html>
