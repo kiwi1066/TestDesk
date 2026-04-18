@@ -714,6 +714,34 @@ function clearAllData(){
   render();
 }
 
+
+//CLEAR DESKS
+function clearDesks(){
+
+  if(!confirm("Clear desk allocations?")) return;
+
+  history.push(JSON.parse(JSON.stringify(deskData)));
+
+  const d = day.value;
+
+  // if desks selected → clear only those
+  if(selectedDesks.length){
+    selectedDesks.forEach(id=>{
+      deskData[id][d] = "";
+    });
+  } 
+  // otherwise clear entire day
+  else {
+    Object.keys(deskData).forEach(id=>{
+      deskData[id][d] = "";
+    });
+  }
+
+  saveState();
+  render();
+}
+
+
 //EXPORT IMAGE
 function exportImage(){
 
