@@ -452,33 +452,6 @@ function buildLegend(){
 }
 
 
-  /* CLEAR BUTTON
-  const clear = document.createElement("div");
-  clear.className = "chip";
-  clear.innerText = "Deselect";
-
-  clear.onclick = () => {
-
-    history.push(JSON.parse(JSON.stringify(deskData)));
-    const d = day.value;
-
-    if (selectedDesks.length) {
-      selectedDesks.forEach(id => deskData[id][d] = "");
-    } else {
-      Object.keys(deskData).forEach(id => deskData[id][d] = "");
-    }
-
-    saveState();
-    render();
-  };
-
-  legend.appendChild(clear);
-}
-
-*/
-
-
-
 // SUMMARY
 function updateSummary(){
 
