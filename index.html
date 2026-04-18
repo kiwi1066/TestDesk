@@ -351,6 +351,12 @@ function render(){
 
     const shape=desk.querySelector("rect,polygon,path");
     const t=deskData[id][day.value];
+    if(t){
+  const teamLabel = teamNames[t] ? `${t} ${teamNames[t]}` : t;
+  desk.setAttribute("title", teamLabel);
+} else {
+  desk.removeAttribute("title");
+}
 
     const teamIds = Object.keys(teamNames).sort((a,b)=>{
   return parseInt(a.slice(1)) - parseInt(b.slice(1));
@@ -442,7 +448,7 @@ function buildLegend(){
 
 
 
-  // CLEAR BUTTON
+  /* CLEAR BUTTON
   const clear = document.createElement("div");
   clear.className = "chip";
   clear.innerText = "Deselect";
@@ -465,7 +471,7 @@ function buildLegend(){
   legend.appendChild(clear);
 }
 
-
+*/
 
 
 
@@ -731,7 +737,7 @@ function clearAllData(){
   render();
 }
 
-//CLEAR DESKS
+//EXPORT IMAGE
 function exportImage(){
 
   const canvas = document.createElement("canvas");
