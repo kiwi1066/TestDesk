@@ -513,11 +513,15 @@ function clearAllData(){
 ====================================================== */
 
 function triggerImport(){
-  fileInput.click();
+  const input = fileInput;
+  input.value = "";   // 🔥 reset so same file can be selected again
+  input.click();
 }
 
 function triggerTeamImport(){
-  teamFileInput.click();
+  const input = teamFileInput;
+  input.value = "";   // 🔥 reset so same file can be selected again
+  input.click();
 }
 
 function exportCSV(){
