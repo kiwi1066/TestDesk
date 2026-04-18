@@ -21,7 +21,7 @@ body {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 950px;
   margin: 20px auto;
   background: white;
   padding: 25px;
@@ -30,11 +30,26 @@ body {
 
 h1 { margin: 0; font-size: 22px; }
 h2 { margin-top: 25px; color:#0b3c66; }
+h3 { margin-top: 15px; }
+
 p { line-height: 1.6; }
 
-ul {
-  margin-top: 8px;
-  padding-left: 18px;
+.toolbar {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.toolbar img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+.button-section {
+  margin-top: 20px;
+}
+
+.button-section div {
+  margin-bottom: 10px;
 }
 
 .tip {
@@ -42,6 +57,24 @@ ul {
   border-left:4px solid #0b3c66;
   padding:10px;
   margin:15px 0;
+}
+	
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  background: #0b3c66;
+  color: white;
+
+  padding: 4px 10px;
+  border-radius: 6px;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  margin-right: 8px;
+  white-space: nowrap;
 }
 
 </style>
@@ -58,103 +91,95 @@ ul {
 
 <h2>Overview</h2>
 <p>
-The Desk Planner allows you to assign desks to teams across the working week using an interactive floor plan.
-You can import team lists, allocate desks visually, and export your plan for reuse.
+The Desk Planner allows you to visually assign desks to teams across the week using an interactive floor plan.
+You can import teams, allocate desks, and export your plan for reuse or reporting.
 </p>
+
+---
+
+<h2>Main Toolbar</h2>
+
+<div class="toolbar">
+  <!-- Replace filename if needed -->
+  <img src="desk menu default.jpg" alt="Toolbar">
+</div>
+
+<div class="button-section">
+
+<div><strong><span class="help-btn">📋 Copy</span></strong>  
+Copies all desk allocations from the selected day to one or more other days.</div>
+
+<div><strong><span class="help-btn">👥 Import Teams</span></strong>  
+Imports a CSV file containing team IDs and names (e.g. T1, Finance).  
+This builds the team legend automatically.</div>
+
+<div><strong><span class="help-btn">⬇ Export</span></strong>  
+Exports the current desk plan to CSV, including team names.  
+This file can be re-imported later.</div>
+
+<div><strong><span class="help-btn">↩ Undo</span></strong>  
+Reverts the last change made to desk assignments.</div>
+
+<div><strong><span class="help-btn">🗑 Reset</span></strong>  
+Completely resets the application, clearing all data and reloading the page.</div>
+
+<div><strong><span class="help-btn">🧩 Multi</span></strong>  
+Toggles multi-select mode.  
+When ON, you can select multiple desks without holding Ctrl.</div>
+
+<div><strong><span class="help-btn">📂 Import</span></strong>  
+Imports a previously exported desk plan CSV.  
+Restores both desk allocations and team names.</div>
+
+<div><strong><span class="help-btn">➕ Add Team</span></strong>  
+Adds a new team manually.  
+The system automatically assigns the next available team ID (e.g. T1, T4, etc).</div>
+
+<div><strong><span class="help-btn">🧹 Clear All</span></strong>  
+Clears all desk allocations and removes all teams, without reloading the page.</div>
+
+<div><strong><span class="help-btn">🧽 Clear Desks</span></strong>  
+Clears desk assignments only.  
+If desks are selected, only those desks are cleared.  
+If none are selected, the entire day is cleared.</div>
+
+<div><strong><span class="help-btn">📸 Export Image</span></strong>  
+Exports the current floor plan as an image, including team colours and allocation summary.</div>
+
+<div><strong><span class="help-btn">❓ Help</span></strong>  
+Opens this help guide.</div>
+
+</div>
 
 ---
 
 <h2>Basic Workflow</h2>
 <ul>
-  <li>Select a <strong>day</strong> from the dropdown</li>
-  <li>Click one or more desks on the floor plan</li>
-  <li>Click a <strong>team</strong> in the legend to assign</li>
-  <li>Repeat for other days as needed</li>
+  <li>Select a <strong>day</strong></li>
+	<li>Add Teams by Import (CSV) or by using the Add team button </li>
+  <li>Click desks on the floor plan either one at a time or many (Multi button or CTRL key) at a time. </li>
+	<li>Once a desk or many desks are selected click on the Team name above under the Teams menu. This will assign the selected desk/s to that team.</li>
+  <li>Click a team in the legend to assign</li>
 </ul>
 
 <div class="tip">
-Tip: Hold <strong>Ctrl</strong> or enable <strong>Multi</strong> to select multiple desks at once.
+Tip: Use <strong>Multi</strong> or hold <strong>Ctrl</strong> to select multiple desks.
 </div>
 
 ---
 
 <h2>Teams</h2>
-
-<h3>Import Teams</h3>
-<p>
-Use the <strong>Import Teams</strong> button to load a CSV file with team IDs and names.
-</p>
-
-<p>Example format:</p>
-<pre>
-team_id,team_name
-T1,Finance
-T2,HR
-T3,IT
-</pre>
-
-<h3>Add Team</h3>
-<p>
-Use <strong>Add Team</strong> to create a new team on the fly.
-The system will automatically assign the next available team ID (e.g. T1, T4, etc).
-</p>
-
----
-
-<h2>Assigning Desks</h2>
 <ul>
-  <li>Select desks by clicking on the map</li>
-  <li>Click a team in the legend to assign</li>
-  <li>Click empty space to clear selection</li>
+  <li>Import teams using a CSV file</li>
+  <li>Add new teams using the Add Team button</li>
+  <li>The legend updates automatically</li>
 </ul>
 
 ---
 
-<h2>Copy Between Days</h2>
+<h2>Desk Allocation Summary</h2>
 <p>
-Use the <strong>Copy</strong> button to copy desk assignments from the current day to one or more other days.
-</p>
-
----
-
-<h2>Import / Export</h2>
-
-<h3>Export</h3>
-<p>
-Export saves:
-</p>
-<ul>
-  <li>Desk assignments for each day</li>
-  <li>Team IDs (T1, T2, etc)</li>
-  <li>Team names</li>
-</ul>
-
-<h3>Import</h3>
-<p>
-Import restores:
-</p>
-<ul>
-  <li>Desk assignments</li>
-  <li>Team names (automatically rebuilds the legend)</li>
-</ul>
-
-<div class="tip">
-You do not need to re-import the team list if using an exported file.
-</div>
-
----
-
-<h2>Legend</h2>
-<p>
-The legend shows all available teams and their colours.
-Clicking a team assigns it to the selected desks.
-</p>
-
----
-
-<h2>Summary</h2>
-<p>
-The summary shows:
+The Desk Allocation Summary shows:
 </p>
 <ul>
   <li>Total desks</li>
@@ -166,26 +191,17 @@ The summary shows:
 
 <h2>Compare Mode</h2>
 <p>
-Switch to <strong>Compare</strong> mode to view two days side by side.
+Switch to Compare mode to view two days side-by-side.  
 Editing is disabled in this mode.
 </p>
 
 ---
 
-<h2>Other Features</h2>
-<ul>
-  <li><strong>Undo</strong> – revert last change</li>
-  <li><strong>Reset</strong> – clear all data</li>
-  <li><strong>Multi</strong> – toggle multi-select mode</li>
-</ul>
-
----
-
 <h2>Tips</h2>
 <ul>
-  <li>Use CSV export regularly to save your work</li>
-  <li>Keep team IDs consistent across floors</li>
-  <li>Use Compare mode to review occupancy changes</li>
+  <li>Export regularly to save your work</li>
+  <li>Use consistent team IDs across floors</li>
+  <li>Use Compare mode to review changes</li>
 </ul>
 
 </div>
