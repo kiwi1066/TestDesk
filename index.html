@@ -191,10 +191,6 @@ button {
 
 <script>
 
-/* ======================================================
-   GLOBAL STATE & CONFIG
-====================================================== */
-
 let deskData = {};
 let selectedDesks = [];
 let history = [];
@@ -211,45 +207,56 @@ const teamColors = {
   T10:"#28a745"
 };
 
-/* ======================================================
-   INITIALISATION
-====================================================== */
-
-// populate day dropdowns
+// INIT DAYS
 keys.forEach((k,i)=>{
   day.innerHTML+=`<option value="${k}">${names[i]}</option>`;
   day2.innerHTML+=`<option value="${k}">${names[i]}</option>`;
 });
 
-// load SVG + initialise desks
+// LOAD SVG
+function loadSVG(id, cb){
+  fetch("deskPlan.svg")
+  .then(r=>r.text())
+  .then(svg=>{
+    document.getElementById(id).innerHTML=svg;
+    document.querySelector(`#${id} svg`).setAttribute("preserveAspectRatio","xMinYMin meet");
+    cb && cb();
+  });
+}
+
 loadSVG("svgContainer", ()=>{
   document.querySelectorAll("g[id^='desk']").forEach(d=>{
     deskData[d.id]={mon:"",tue:"",wed:"",thu:"",fri:""};
   });
-
   loadState();
   setupClick();
   buildLegend();
   render();
 });
 
-/* ======================================================
-   STORAGE
-====================================================== */
 
-function saveState(){
-  localStorage.setItem("deskPlannerData", JSON.stringify({
-    deskData,
-    teamNames
-  }));
+function getTeamColorFromId(teamId){
+  const num = parseInt(teamId.replace("T",""));
+  const hue = (num * 47) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
 }
 
+// STORAGE
+function saveState(){
+  const state = {
+    deskData: deskData,
+    teamNames: teamNames
+  };
+
+  localStorage.setItem("deskPlannerData", JSON.stringify(state));
+}
 function loadState(){
   const s = localStorage.getItem("deskPlannerData");
   if(!s) return;
 
   const state = JSON.parse(s);
 
+  // backward compatibility (old saves)
   if(state.deskData){
     deskData = state.deskData;
     teamNames = state.teamNames || {};
@@ -258,54 +265,80 @@ function loadState(){
   }
 }
 
-/* ======================================================
-   SVG LOADING
-====================================================== */
-
-function loadSVG(id, cb){
-  fetch("deskPlan.svg")
-    .then(r=>r.text())
-    .then(svg=>{
-      document.getElementById(id).innerHTML=svg;
-      document.querySelector(`#${id} svg`)
-        .setAttribute("preserveAspectRatio","xMinYMin meet");
-      cb && cb();
-    });
-}
-
-/* ======================================================
-   INTERACTION (CLICK / SELECT)
-====================================================== */
-
+// CLICK (disabled in compare)
 function setupClick(){
-  document.querySelector("#svgContainer svg")
-    .addEventListener("click",e=>{
+  document.querySelector("#svgContainer svg").addEventListener("click",e=>{
+    if(mode.value==="compare") return;
 
-      if(mode.value==="compare") return;
+    const desk=e.target.closest("g[id^='desk']");
+    if(!desk){ selectedDesks=[]; highlight(); return; }
 
-      const desk=e.target.closest("g[id^='desk']");
-      if(!desk){
-        selectedDesks=[];
-        highlight();
-        return;
-      }
+    const id=desk.id;
 
-      const id=desk.id;
+    if(multiMode||e.ctrlKey){
+      selectedDesks.includes(id)
+        ? selectedDesks=selectedDesks.filter(d=>d!==id)
+        : selectedDesks.push(id);
+    } else selectedDesks=[id];
 
-      if(multiMode||e.ctrlKey){
-        selectedDesks.includes(id)
-          ? selectedDesks=selectedDesks.filter(d=>d!==id)
-          : selectedDesks.push(id);
-      } else selectedDesks=[id];
-
-      highlight();
-    });
+    highlight();
+  });
 }
 
-/* ======================================================
-   RENDERING
-====================================================== */
+// HIGHLIGHT
+function highlight(){
+  document.querySelectorAll("#svgContainer g[id^='desk']").forEach(d=>{
+    const s=d.querySelector("rect,polygon,path");
 
+    if(selectedDesks.includes(d.id)){
+      s.setAttribute("stroke","#000");
+      s.setAttribute("stroke-width","2.5");
+      s.style.filter="drop-shadow(0 0 3px rgba(0,0,0,0.6))";
+      s.style.opacity="1";
+    } else {
+      s.setAttribute("stroke","none");
+      s.style.filter="none";
+      s.style.opacity="0.85";
+    }
+  });
+}
+
+// APPLY
+function applyTeam(team){
+  history.push(JSON.parse(JSON.stringify(deskData)));
+  selectedDesks.forEach(id=>deskData[id][day.value]=team);
+  saveState();
+  render();
+}
+
+// COPY
+function openCopyTo(){
+  copyDays.innerHTML="";
+  keys.forEach((k,i)=>{
+    if(k===day.value) return;
+    copyDays.innerHTML+=`<label><input type="checkbox" value="${k}"> ${names[i]}</label>`;
+  });
+  copyModal.style.display="block";
+}
+
+function applyCopy(){
+  const selected=[...document.querySelectorAll("#copyDays input:checked")].map(c=>c.value);
+  if(!selected.length) return;
+
+  history.push(JSON.parse(JSON.stringify(deskData)));
+
+  Object.keys(deskData).forEach(id=>{
+    selected.forEach(d=>deskData[id][d]=deskData[id][day.value]);
+  });
+
+  saveState();
+  closeCopy();
+  render();
+}
+
+function closeCopy(){ copyModal.style.display="none"; }
+
+// RENDER
 function render(){
   if(mode.value==="compare"){
     renderCompare();
@@ -316,31 +349,32 @@ function render(){
     const desk=document.getElementById(id);
     if(!desk) return;
 
-    const shape = desk.querySelector("rect,polygon,path");
-    const t = deskData[id][day.value];
+      const shape = desk.querySelector("rect,polygon,path");
+      const t = deskData[id][day.value];
 
-    // tooltip (SVG native)
-    const existingTitle = shape.querySelector("title");
-    if(existingTitle) existingTitle.remove();
+      // remove existing SVG title (prevents duplicates)
+      const existingTitle = shape.querySelector("title");
+      if(existingTitle) existingTitle.remove();
 
-    if(t){
-      const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-      title.textContent = teamNames[t] ? `${t} ${teamNames[t]}` : t;
-      shape.appendChild(title);
-    }
+      if(t){
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = teamNames[t] ? `${t} ${teamNames[t]}` : t;
+        shape.appendChild(title);
+      }
 
-    const color = teamColors[t] || getTeamColorFromId(t);
-    shape.setAttribute("fill", color || "transparent");
+    const teamIds = Object.keys(teamNames).sort((a,b)=>{
+  return parseInt(a.slice(1)) - parseInt(b.slice(1));
+});
+const color = teamColors[t] || getTeamColorFromId(t);
+
+shape.setAttribute("fill", color || "transparent");
   });
 
   updateSummary();
   highlight();
 }
 
-/* ======================================================
-   COMPARE MODE
-====================================================== */
-
+// COMPARE
 function renderCompare(){
   renderInto("svgContainer1", day.value);
   renderInto("svgContainer2", day2.value);
@@ -358,37 +392,42 @@ function renderInto(container, d){
   });
 }
 
-/* ======================================================
-   HIGHLIGHT
-====================================================== */
+// MODE SWITCH
+mode.addEventListener("change",()=>{
 
-function highlight(){
-  document.querySelectorAll("#svgContainer g[id^='desk']")
-    .forEach(d=>{
-      const s=d.querySelector("rect,polygon,path");
+  if(mode.value==="compare"){
+    editControls.style.display="none";
+    compareControls.style.display="inline";
+    mapSingle.style.display="none";
+    compareWrap.style.display="flex";
 
-      if(selectedDesks.includes(d.id)){
-        s.setAttribute("stroke","#000");
-        s.setAttribute("stroke-width","2.5");
-        s.style.filter="drop-shadow(0 0 3px rgba(0,0,0,0.6))";
-      } else {
-        s.setAttribute("stroke","none");
-        s.style.filter="none";
-      }
-    });
-}
+    loadSVG("svgContainer1");
+    loadSVG("svgContainer2", renderCompare);
 
-/* ======================================================
-   LEGEND & SUMMARY
-====================================================== */
+  } else {
+    editControls.style.display="block";
+    compareControls.style.display="none";
+    mapSingle.style.display="block";
+    compareWrap.style.display="none";
 
+    render();
+  }
+});
+
+day.addEventListener("change", render);
+day2.addEventListener("change", renderCompare);
+
+// LEGEND
 function buildLegend(){
+
   legend.innerHTML = "";
 
-  const teamIds = Object.keys(teamNames)
-    .sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  const teamIds = Object.keys(teamNames).sort((a,b)=>{
+  return parseInt(a.slice(1)) - parseInt(b.slice(1));
+});
 
-  teamIds.forEach(t=>{
+  teamIds.forEach((t, i)=>{
+
     const chip = document.createElement("div");
     chip.className = "chip";
 
@@ -396,7 +435,8 @@ function buildLegend(){
 
     chip.innerHTML = `
       <span style="
-        width:10px;height:10px;
+        width:10px;
+        height:10px;
         background:${color};
         border-radius:50%;
         display:inline-block;
@@ -405,66 +445,69 @@ function buildLegend(){
     `;
 
     chip.onclick = () => selectedDesks.length && applyTeam(t);
+
     legend.appendChild(chip);
   });
+
 }
 
+
+// SUMMARY
 function updateSummary(){
+
   const d = day.value;
   const total = Object.keys(deskData).length;
 
   let assigned = 0;
   let teamCounts = {};
 
-  Object.values(deskData).forEach(v=>{
-    if(v[d]){
+  // count assignments
+  Object.values(deskData).forEach(v => {
+    const t = v[d];
+
+    if (t) {
       assigned++;
-      teamCounts[v[d]]=(teamCounts[v[d]]||0)+1;
+      teamCounts[t] = (teamCounts[t] || 0) + 1;
     }
   });
 
+  // base summary
   let html = `
     <strong>Total:</strong> ${total} |
     <strong>Assigned:</strong> ${assigned} |
-    <strong>Free:</strong> ${total-assigned}<br>
+    <strong>Free:</strong> ${total - assigned}
+    <br>
   `;
 
-  const teamIds = Object.keys(teamNames)
-    .sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+// team breakdown (dynamic)
+const teamIds = Object.keys(teamNames).length
+  ? Object.keys(teamNames).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)))
+  : Object.keys(teamColors);
 
-  teamIds.forEach(t=>{
-    html += `
-      <span style="
-        display:inline-block;
-        padding:2px 8px;
-        border-radius:12px;
-        background:${teamColors[t]||getTeamColorFromId(t)};
-        color:white;
-        font-size:11px;
-        margin-right:6px;
-      ">
-        ${t}: ${teamCounts[t]||0}
-      </span>
-    `;
-  });
+teamIds.forEach((t, i) => {
+  html += `
+  <span style="
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:12px;
+    background:${teamColors[t] || getTeamColorFromId(t)};
+    color:white;
+    font-size:11px;
+    margin-right:6px;
+  ">
+    ${t}: ${teamCounts[t] || 0}
+  </span>
+  `;
+});
 
   summary.innerHTML = html;
 }
 
-/* ======================================================
-   ACTIONS
-====================================================== */
-
-function applyTeam(team){
-  history.push(JSON.parse(JSON.stringify(deskData)));
-  selectedDesks.forEach(id=>deskData[id][day.value]=team);
-  saveState();
-  render();
-}
-
+// OTHER
 function toggleMulti(){
-  multiMode=!multiMode;
-  multiBtn.innerText="🧩 Multi "+(multiMode?"ON":"OFF");
+  multiMode = !multiMode;
+  multiBtn.innerText = "🧩 Multi " + (multiMode ? "ON" : "OFF");
+
   multiBtn.style.background = multiMode ? "#28a745" : "#0b3c66";
 }
 
@@ -475,74 +518,139 @@ function undo(){
   render();
 }
 
-function clearDesks(){
-  if(!confirm("Clear desk allocations?")) return;
 
-  history.push(JSON.parse(JSON.stringify(deskData)));
-
-  const d = day.value;
-
-  if(selectedDesks.length){
-    selectedDesks.forEach(id=>deskData[id][d]="");
-  } else {
-    Object.keys(deskData).forEach(id=>deskData[id][d]="");
-  }
-
-  saveState();
-  render();
+//CSV DESK DATA IMPORT
+function triggerImport(){
+  document.getElementById("fileInput").click();
 }
 
-function clearAllData(){
-  if(!confirm("Clear all desk allocations AND teams?")) return;
+document.getElementById("fileInput").addEventListener("change", e => {
 
-  Object.keys(deskData).forEach(id=>{
-    keys.forEach(d=>deskData[id][d]="");
-  });
+  const f = e.target.files[0];
+  if (!f) return;
 
-  teamNames={};
-  selectedDesks=[];
-  history=[];
+  const r = new FileReader();
 
-  saveState();
+  r.onload = e => {
+
+    const rows = e.target.result.split("\n");
+
+    rows.slice(1).forEach(row => {
+
+      const c = row.split(",");
+
+      if (!deskData[c[0]]) return;
+
+      // assign IDs
+      keys.forEach((d,i)=>{
+        deskData[c[0]][d] = (c[i+1] || "").trim();
+      });
+
+      // ✅ NEW: restore team names from CSV
+      if (c.length >= 11) {
+
+        const nameCols = c.slice(6,11);
+
+        nameCols.forEach((name, i) => {
+
+          const teamId = c[i+1];
+
+          if (teamId && name) {
+            teamNames[teamId.trim()] = name.trim();
+          }
+
+        });
+      }
+
+    });
+
+    saveState();
+    buildLegend();   // rebuild legend with names
+    render();
+
+  };
+
+  r.readAsText(f);
+});
+
+
+//ADD NEW TEAM NAME
+function addTeam(){
+
+  // get existing team numbers
+  const existing = Object.keys(teamNames)
+    .map(t => parseInt(t.replace("T","")))
+    .filter(n => !isNaN(n));
+
+  // find lowest available number
+  let newNum = 1;
+  while(existing.includes(newNum)){
+    newNum++;
+  }
+
+  const newId = "T" + newNum;
+
+  // ask user for name
+  const name = prompt(`Enter name for ${newId}:`);
+  if(!name) return;
+
+  // add to team list
+  teamNames[newId] = name.trim();
+
+  // rebuild UI
   buildLegend();
   render();
 }
 
-/* ======================================================
-   IMPORT / EXPORT
-====================================================== */
-
-function triggerImport(){
-  const input = fileInput;
-  input.value = "";   // 🔥 reset so same file can be selected again
-  input.click();
-}
-
-function triggerTeamImport(){
-  const input = teamFileInput;
-  input.value = "";   // 🔥 reset so same file can be selected again
-  input.click();
-}
 
 function exportCSV(){
+
   let fileName = prompt("Enter file name:", "desk-data");
   if (!fileName) return;
 
-  let csv="desk,mon,tue,wed,thu,fri,mon_name,tue_name,wed_name,thu_name,fri_name\n";
+  fileName = fileName.replace(/\.csv$/i, "");
 
-  Object.keys(deskData).forEach(d=>{
-    const r=deskData[d];
-    csv += `${d},${r.mon||""},${r.tue||""},${r.wed||""},${r.thu||""},${r.fri||""},${teamNames[r.mon]||""},${teamNames[r.tue]||""},${teamNames[r.wed]||""},${teamNames[r.thu]||""},${teamNames[r.fri]||""}\n`;
+  // header
+  let csv = "desk,mon,tue,wed,thu,fri,mon_name,tue_name,wed_name,thu_name,fri_name\n";
+
+  Object.keys(deskData).forEach(d => {
+
+    const r = deskData[d];
+
+    // IDs
+    const mon = r.mon || "";
+    const tue = r.tue || "";
+    const wed = r.wed || "";
+    const thu = r.thu || "";
+    const fri = r.fri || "";
+
+    // Names
+    const monName = teamNames[mon] || "";
+    const tueName = teamNames[tue] || "";
+    const wedName = teamNames[wed] || "";
+    const thuName = teamNames[thu] || "";
+    const friName = teamNames[fri] || "";
+
+    csv += `${d},${mon},${tue},${wed},${thu},${fri},${monName},${tueName},${wedName},${thuName},${friName}\n`;
   });
 
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([csv]));
-  a.download=fileName+".csv";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv]));
+  a.download = fileName + ".csv";
   a.click();
 }
 
-// TEAM CSV IMPORT
-teamFileInput.addEventListener("change", e => {
+function clearAll(){
+  if(!confirm("Clear all data?")) return;
+  localStorage.removeItem("deskPlannerData");
+  location.reload();
+}
+
+function triggerTeamImport(){
+  document.getElementById("teamFileInput").click();
+}
+
+document.getElementById("teamFileInput").addEventListener("change", e => {
 
   const file = e.target.files[0];
   if (!file) return;
@@ -555,43 +663,205 @@ teamFileInput.addEventListener("change", e => {
 
     teamNames = {}; // reset
 
-    lines.slice(1).forEach(line => {
+      lines.slice(1).forEach(line => {
 
-      const parts = line.split(",");
+        const parts = line.split(",");
 
-      if (parts.length < 2) return;
+        if (parts.length < 2) return;
 
-      const id = parts[0].trim().replace(/\r/g,"");
-      const name = parts[1].trim().replace(/\r/g,"");
+        const id = parts[0].trim().replace(/\r/g,"");
+        const name = parts[1].trim().replace(/\r/g,"");
 
-      if (id && name) {
-        teamNames[id] = name;
-      }
+        if (id && name) {
+          teamNames[id] = name;
+        }
 
-    });
+      });
 
-    // rebuild UI
+    // rebuild legend with names
+    legend.innerHTML = "";
     buildLegend();
     saveState();
     render();
-
-    console.log("Teams imported:", teamNames); // debug
   };
 
   reader.readAsText(file);
 });
 
-/* ======================================================
-   UTILITIES
-====================================================== */
+function clearAllData(){
 
-function getTeamColorFromId(teamId){
-  const num=parseInt(teamId.replace("T",""));
-  return `hsl(${(num*47)%360},65%,55%)`;
+  if(!confirm("Clear all desk allocations AND teams?")) return;
+
+  // clear desk assignments
+  Object.keys(deskData).forEach(id=>{
+    keys.forEach(d=>{
+      deskData[id][d] = "";
+    });
+  });
+
+  // clear teams
+  teamNames = {};
+
+  // clear selection + history
+  selectedDesks = [];
+  history = [];
+
+  // persist change
+  saveState();
+
+  // rebuild UI
+  buildLegend();
+  render();
+}
+
+
+//CLEAR DESKS
+function clearDesks(){
+
+  if(!confirm("Clear desk allocations?")) return;
+
+  history.push(JSON.parse(JSON.stringify(deskData)));
+
+  const d = day.value;
+
+  // if desks selected → clear only those
+  if(selectedDesks.length){
+    selectedDesks.forEach(id=>{
+      deskData[id][d] = "";
+    });
+  } 
+  // otherwise clear entire day
+  else {
+    Object.keys(deskData).forEach(id=>{
+      deskData[id][d] = "";
+    });
+  }
+
+  saveState();
+  render();
+}
+
+
+//EXPORT IMAGE
+function exportImage(){
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const img = new Image();
+  img.src = "floorPlan.png";
+
+  img.onload = () => {
+
+    const width = img.width;
+    const height = img.height;
+
+    const bannerHeight = 70;
+    const summaryHeight = 180;
+
+    canvas.width = width;
+    canvas.height = height + bannerHeight + summaryHeight;
+
+    // background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // ===== HEADER BANNER =====
+    ctx.fillStyle = "#0b3c66";
+    ctx.fillRect(0, 0, width, bannerHeight);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+
+    // Title
+    ctx.font = "bold 26px Segoe UI";
+    ctx.fillText("L11 Desk Planner", width / 2, 30);
+
+    // Day
+    ctx.font = "16px Segoe UI";
+    ctx.fillText(day.options[day.selectedIndex].text, width / 2, 55);
+
+    // ===== FLOOR PLAN =====
+    ctx.drawImage(img, 0, bannerHeight);
+
+    // ===== SVG OVERLAY =====
+    const svg = document.querySelector("#svgContainer svg");
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgData], {type:"image/svg+xml"});
+    const url = URL.createObjectURL(svgBlob);
+
+    const svgImg = new Image();
+
+    svgImg.onload = () => {
+
+      ctx.drawImage(svgImg, 0, bannerHeight);
+
+      // ===== SUMMARY DATA =====
+      const d = day.value;
+
+      let teamCounts = {};
+      Object.values(deskData).forEach(v=>{
+        if(v[d]) teamCounts[v[d]] = (teamCounts[v[d]]||0)+1;
+      });
+
+      const teamIds = Object.keys(teamNames)
+        .sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+
+      let yStart = bannerHeight + height + 40;
+
+      // ===== SUMMARY TITLE =====
+      ctx.fillStyle = "#000";
+      ctx.textAlign = "center";
+      ctx.font = "bold 18px Segoe UI";
+      ctx.fillText("Desk Allocation Summary", width / 2, yStart);
+
+      yStart += 30;
+
+      // ===== SUMMARY GRID =====
+      ctx.font = "14px Segoe UI";
+
+      const itemsPerRow = Math.max(1, Math.floor(width / 260));
+      const colWidth = width / itemsPerRow;
+
+      teamIds.forEach((t, i) => {
+
+        const col = i % itemsPerRow;
+        const row = Math.floor(i / itemsPerRow);
+
+        const x = col * colWidth + 20;
+        const y = yStart + (row * 26);
+
+        const color = teamColors[t] || getTeamColorFromId(t);
+
+        // ===== COLOUR BUBBLE =====
+        ctx.beginPath();
+        ctx.arc(x + 8, y - 6, 6, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // ===== TEXT =====
+        ctx.fillStyle = "#000";
+        ctx.textAlign = "left";
+
+        ctx.fillText(
+          `${t} ${teamNames[t]}: ${teamCounts[t] || 0}`,
+          x + 20,
+          y
+        );
+      });
+
+      // ===== DOWNLOAD =====
+      const link = document.createElement("a");
+      link.download = "desk-plan.png";
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+
+    svgImg.src = url;
+  };
 }
 
 </script>
-
 
 </body>
 </html>
