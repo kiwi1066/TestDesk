@@ -349,14 +349,18 @@ function render(){
     const desk=document.getElementById(id);
     if(!desk) return;
 
-    const shape=desk.querySelector("rect,polygon,path");
-    const t=deskData[id][day.value];
-    if(t){
-  const teamLabel = teamNames[t] ? `${t} ${teamNames[t]}` : t;
-  desk.setAttribute("title", teamLabel);
-} else {
-  desk.removeAttribute("title");
-}
+      const shape = desk.querySelector("rect,polygon,path");
+      const t = deskData[id][day.value];
+
+      // remove existing SVG title (prevents duplicates)
+      const existingTitle = shape.querySelector("title");
+      if(existingTitle) existingTitle.remove();
+
+      if(t){
+        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        title.textContent = teamNames[t] ? `${t} ${teamNames[t]}` : t;
+        shape.appendChild(title);
+      }
 
     const teamIds = Object.keys(teamNames).sort((a,b)=>{
   return parseInt(a.slice(1)) - parseInt(b.slice(1));
