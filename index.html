@@ -732,56 +732,48 @@ function clearAllData(){
 }
 
 //CLEAR DESKS
-function clearDesks(){
-
-  if(!confirm("Clear desk allocations?")) return;
-
-  history.push(JSON.parse(JSON.stringify(deskData)));
-
-  const d = day.value;
-
-  // if desks selected → clear only those
-  if(selectedDesks.length){
-    selectedDesks.forEach(id=>{
-      deskData[id][d] = "";
-    });
-  } 
-  // otherwise clear entire day
-  else {
-    Object.keys(deskData).forEach(id=>{
-      deskData[id][d] = "";
-    });
-  }
-
-  saveState();
-  render();
-}
-
 function exportImage(){
 
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
   const img = new Image();
-  img.src = "floorPlan.png";
+  img.src = "L11_V3A.png";
 
   img.onload = () => {
 
     const width = img.width;
     const height = img.height;
 
-    // extra space for summary
+    const bannerHeight = 70;
+    const summaryHeight = 180;
+
     canvas.width = width;
-    canvas.height = height + 180;
+    canvas.height = height + bannerHeight + summaryHeight;
 
     // background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // draw floor image
-    ctx.drawImage(img,0,0);
+    // ===== HEADER BANNER =====
+    ctx.fillStyle = "#0b3c66";
+    ctx.fillRect(0, 0, width, bannerHeight);
 
-    // draw SVG overlay
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+
+    // Title
+    ctx.font = "bold 26px Segoe UI";
+    ctx.fillText("L11 Desk Planner", width / 2, 30);
+
+    // Day
+    ctx.font = "16px Segoe UI";
+    ctx.fillText(day.options[day.selectedIndex].text, width / 2, 55);
+
+    // ===== FLOOR PLAN =====
+    ctx.drawImage(img, 0, bannerHeight);
+
+    // ===== SVG OVERLAY =====
     const svg = document.querySelector("#svgContainer svg");
     const svgData = new XMLSerializer().serializeToString(svg);
     const svgBlob = new Blob([svgData], {type:"image/svg+xml"});
@@ -791,45 +783,63 @@ function exportImage(){
 
     svgImg.onload = () => {
 
-      ctx.drawImage(svgImg,0,0);
+      ctx.drawImage(svgImg, 0, bannerHeight);
 
-      // HEADER (centered)
-      ctx.fillStyle = "#0b3c66";
+      // ===== SUMMARY DATA =====
+      const d = day.value;
+
+      let teamCounts = {};
+      Object.values(deskData).forEach(v=>{
+        if(v[d]) teamCounts[v[d]] = (teamCounts[v[d]]||0)+1;
+      });
+
+      const teamIds = Object.keys(teamNames)
+        .sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+
+      let yStart = bannerHeight + height + 40;
+
+      // ===== SUMMARY TITLE =====
+      ctx.fillStyle = "#000";
       ctx.textAlign = "center";
+      ctx.font = "bold 18px Segoe UI";
+      ctx.fillText("Desk Allocation Summary", width / 2, yStart);
 
-      ctx.font = "bold 20px Segoe UI";
-      ctx.fillText("L11 Desk Planner", width / 2, 30);
+      yStart += 30;
 
+      // ===== SUMMARY GRID =====
       ctx.font = "14px Segoe UI";
-      ctx.fillText(day.options[day.selectedIndex].text, width / 2, 55);
 
-        // SUMMARY (centered bottom)
-        const d = day.value;
+      const itemsPerRow = Math.max(1, Math.floor(width / 260));
+      const colWidth = width / itemsPerRow;
 
-        let teamCounts = {};
-        Object.values(deskData).forEach(v=>{
-          if(v[d]) teamCounts[v[d]] = (teamCounts[v[d]]||0)+1;
-        });
+      teamIds.forEach((t, i) => {
 
-        const teamIds = Object.keys(teamNames).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+        const col = i % itemsPerRow;
+        const row = Math.floor(i / itemsPerRow);
 
-        ctx.textAlign = "center";
+        const x = col * colWidth + 20;
+        const y = yStart + (row * 26);
 
-        // Title
+        const color = teamColors[t] || getTeamColorFromId(t);
+
+        // ===== COLOUR BUBBLE =====
+        ctx.beginPath();
+        ctx.arc(x + 8, y - 6, 6, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // ===== TEXT =====
         ctx.fillStyle = "#000";
-        ctx.font = "bold 14px Segoe UI";
-        ctx.fillText("Desk Allocation Summary", width / 2, height + 40);
+        ctx.textAlign = "left";
 
-        // Build summary string
-        ctx.font = "12px Segoe UI";
+        ctx.fillText(
+          `${t} ${teamNames[t]}: ${teamCounts[t] || 0}`,
+          x + 20,
+          y
+        );
+      });
 
-        let summaryText = teamIds.map(t => {
-          return `${t} ${teamNames[t]}: ${teamCounts[t] || 0}`;
-        }).join("   ");
-
-        ctx.fillText(summaryText, width / 2, height + 65);
-
-      // DOWNLOAD
+      // ===== DOWNLOAD =====
       const link = document.createElement("a");
       link.download = "desk-plan.png";
       link.href = canvas.toDataURL();
