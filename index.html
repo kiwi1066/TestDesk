@@ -521,7 +521,9 @@ function undo(){
 
 //CSV DESK DATA IMPORT
 function triggerImport(){
-  document.getElementById("fileInput").click();
+  const input = document.getElementById("fileInput");
+  input.value = "";
+  input.click();
 }
 
 document.getElementById("fileInput").addEventListener("change", e => {
@@ -647,7 +649,9 @@ function clearAll(){
 }
 
 function triggerTeamImport(){
-  document.getElementById("teamFileInput").click();
+  const input = document.getElementById("teamFileInput");
+  input.value = "";   // 🔥 THIS is the fix
+  input.click();
 }
 
 document.getElementById("teamFileInput").addEventListener("change", e => {
