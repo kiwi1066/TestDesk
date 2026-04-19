@@ -381,13 +381,17 @@ function selectDesksInBox(){
 
     const rect = d.getBoundingClientRect();
 
-    const overlap =
-      rect.left < boxRect.right &&
-      rect.right > boxRect.left &&
-      rect.top < boxRect.bottom &&
-      rect.bottom > boxRect.top;
+    // 👉 use center point of desk
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
 
-    if(overlap){
+    const inside =
+      centerX >= boxRect.left &&
+      centerX <= boxRect.right &&
+      centerY >= boxRect.top &&
+      centerY <= boxRect.bottom;
+
+    if(inside){
       selectedDesks.push(d.id);
     }
   });
