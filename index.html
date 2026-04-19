@@ -307,6 +307,9 @@ map.addEventListener("mousedown", e => {
 
   if(mode.value==="compare") return;
 
+   // 🔥 ADD THIS LINE
+  if(!e.shiftKey) return;
+
   // optional: only drag if NOT clicking a desk
   if(e.target.closest("g[id^='desk']")) return;
 
