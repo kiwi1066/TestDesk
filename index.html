@@ -343,9 +343,10 @@ map.addEventListener("mouseup", () => {
   if(!isDragging) return;
 
   isDragging = false;
-  box.style.display = "none";
 
-  selectDesksInBox();
+  selectDesksInBox();   // 🔥 run BEFORE hiding
+
+  box.style.display = "none";
 });
 
 
