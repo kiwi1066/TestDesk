@@ -170,6 +170,16 @@ button {
 
 <div id="mapSingle" class="mapBox">
   <img src="floorPlan.png">
+
+  <!-- ✅ ADD THIS -->
+  <div id="selectionBox" style="
+    position:absolute;
+    border:2px dashed #0b3c66;
+    background:rgba(11,60,102,0.1);
+    display:none;
+    pointer-events:none;
+  "></div>
+
   <div id="svgContainer" class="svgLayer"></div>
 </div>
 
@@ -285,6 +295,58 @@ function setupClick(){
   });
 }
 
+// DRAG SELECTION
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+
+const map = document.querySelector("#mapSingle");
+const box = document.getElementById("selectionBox");
+
+map.addEventListener("mousedown", e => {
+
+  if(mode.value==="compare") return;
+
+  // optional: only drag if NOT clicking a desk
+  if(e.target.closest("g[id^='desk']")) return;
+
+  isDragging = true;
+
+  const rect = map.getBoundingClientRect();
+  startX = e.clientX - rect.left;
+  startY = e.clientY - rect.top;
+
+  box.style.left = startX + "px";
+  box.style.top = startY + "px";
+  box.style.width = "0px";
+  box.style.height = "0px";
+  box.style.display = "block";
+});
+
+map.addEventListener("mousemove", e => {
+  if(!isDragging) return;
+
+  const rect = map.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  box.style.left = Math.min(startX,x) + "px";
+  box.style.top = Math.min(startY,y) + "px";
+  box.style.width = Math.abs(x - startX) + "px";
+  box.style.height = Math.abs(y - startY) + "px";
+});
+
+map.addEventListener("mouseup", () => {
+  if(!isDragging) return;
+
+  isDragging = false;
+  box.style.display = "none";
+
+  selectDesksInBox();
+});
+
+
+
 // HIGHLIGHT
 function highlight(){
   document.querySelectorAll("#svgContainer g[id^='desk']").forEach(d=>{
@@ -301,6 +363,32 @@ function highlight(){
       s.style.opacity="0.85";
     }
   });
+}
+
+
+
+function selectDesksInBox(){
+
+  const boxRect = document.getElementById("selectionBox").getBoundingClientRect();
+
+  selectedDesks = [];
+
+  document.querySelectorAll("#svgContainer g[id^='desk']").forEach(d => {
+
+    const rect = d.getBoundingClientRect();
+
+    const overlap =
+      rect.left < boxRect.right &&
+      rect.right > boxRect.left &&
+      rect.top < boxRect.bottom &&
+      rect.bottom > boxRect.top;
+
+    if(overlap){
+      selectedDesks.push(d.id);
+    }
+  });
+
+  highlight();
 }
 
 // APPLY
